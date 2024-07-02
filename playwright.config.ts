@@ -1,8 +1,11 @@
 // playwright.config.ts
 
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
 
 export const STORAGE_STATE = "./auth/session.json";
+
+dotenv.config({ path: "./e2e/config/.env" });
 
 export default defineConfig({
   testDir: "./e2e",
