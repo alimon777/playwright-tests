@@ -36,19 +36,29 @@ export class TaskPage {
         await expect(taskInDashboard).toBeVisible();
     };
 
+    // poms/tasks.ts (line no: 37)
+
     markTaskAsCompletedAndVerify = async ({ taskName }: TaskName) => {
+        await expect(
+            this.page.getByRole("heading", { name: "Loading..." })
+        ).toBeHidden();
+
+        const completedTaskInDashboard = this.page
+            .getByTestId("tasks-completed-table")
+            .getByRole("row", { name: taskName });
+
+        const isTaskCompleted = await completedTaskInDashboard.count();
+
+        if (isTaskCompleted) return;
+
         await this.page
             .getByTestId("tasks-pending-table")
             .getByRole("row", { name: taskName })
             .getByRole("checkbox")
             .click();
-        const completedTaskInDashboard = this.page
-            .getByTestId("tasks-completed-table")
-            .getByRole("row", { name: taskName });
         await completedTaskInDashboard.scrollIntoViewIfNeeded();
         await expect(completedTaskInDashboard).toBeVisible();
     };
-
     starTaskAndVerify = async ({ taskName }: TaskName) => {
         const starIcon = this.page
             .getByTestId("tasks-pending-table")

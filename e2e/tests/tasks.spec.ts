@@ -1,5 +1,3 @@
-// tasks.spec.ts
-
 import { test } from "../fixtures";
 import { expect } from "@playwright/test";
 import { faker } from "@faker-js/faker";
@@ -8,33 +6,17 @@ import LoginPage from "../poms/login";
 test.describe("Tasks page", () => {
     let taskName: string;
 
-    test.beforeEach(() => {
+    test.beforeEach(async ({ page, taskPage }, testInfo) => {
         taskName = faker.word.words({ count: 5 });
-    });
 
-    test("should create a new task with creator as the assignee", async ({
-        page,
-        taskPage,
-    }) => {
+        if (testInfo.title.includes("[SKIP_SETUP]")) return;
+
         await page.goto("/");
         await taskPage.createTaskAndVerify({ taskName });
     });
 
-    test("should be able to mark a task as completed", async ({
-        page,
-        taskPage,
-    }) => {
+    test.afterEach(async ({ page, taskPage }) => {
         await page.goto("/");
-        await taskPage.createTaskAndVerify({ taskName });
-        await taskPage.markTaskAsCompletedAndVerify({ taskName });
-    });
-
-    test("should be able to delete a completed task", async ({
-        page,
-        taskPage,
-    }) => {
-        await page.goto("/");
-        await taskPage.createTaskAndVerify({ taskName });
         await taskPage.markTaskAsCompletedAndVerify({ taskName });
         const completedTaskInDashboard = page
             .getByTestId("tasks-completed-table")
@@ -52,15 +34,14 @@ test.describe("Tasks page", () => {
         ).toBeHidden();
     });
 
+    test("should be able to mark a task as completed", async ({ taskPage }) => {
+        await taskPage.markTaskAsCompletedAndVerify({ taskName });
+    });
+
     test.describe("Starring tasks feature", () => {
         test.describe.configure({ mode: "serial" });
 
-        test("should be able to star a pending task", async ({
-            page,
-            taskPage,
-        }) => {
-            page.goto("/");
-            await taskPage.createTaskAndVerify({ taskName });
+        test("should be able to star a pending task", async ({ taskPage }) => {
             await taskPage.starTaskAndVerify({ taskName });
         });
 
@@ -68,8 +49,6 @@ test.describe("Tasks page", () => {
             page,
             taskPage,
         }) => {
-            page.goto("/");
-            await taskPage.createTaskAndVerify({ taskName });
             await taskPage.starTaskAndVerify({ taskName });
             const starIcon = page
                 .getByTestId("tasks-pending-table")
@@ -80,7 +59,7 @@ test.describe("Tasks page", () => {
         });
     });
 
-    test("should create a new task with a different user as the assignee", async ({
+    test("should create a new task with a different user as the assignee [SKIP_SETUP]", async ({
         page,
         browser,
         taskPage,
