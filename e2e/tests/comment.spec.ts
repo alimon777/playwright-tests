@@ -85,7 +85,6 @@ test.describe("Task Details Page", () => {
     });
 
     test("should be able to add a new comment as an assignee of a task", async ({
-        page,
         commentPage
     }) => {
 
@@ -98,7 +97,7 @@ test.describe("Task Details Page", () => {
             })
         );
         await test.step("Step 3: Add a comment and verify", async () => {
-            // newCommentPage.addCommentAndVerify({ commentDescription, taskName })
+            // newCommentPage.addCommentAndVerify({ taskName, commentDescription })
             await newUserPage.getByText(taskName).click();
             await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).click();
             await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).fill(commentDescription);
@@ -107,8 +106,7 @@ test.describe("Task Details Page", () => {
             await newUserPage.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
             await expect(newUserPage.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
         });
-        await test.step("Step 4: Visit dashboard as creator", () => newUserPage.goto("/"));
-        await test.step("Step 5: Assert comment to be visible for the creator", async () => {
+        await test.step("Step 4: Assert comment to be visible for the creator", async () => {
             commentPage.verifyComment({ taskName, commentDescription });
         });
         await newUserPage.close();
