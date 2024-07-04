@@ -2,7 +2,9 @@ import { test } from "../fixtures";
 import { BrowserContext, Page, expect } from "@playwright/test";
 import { faker } from "@faker-js/faker";
 import LoginPage from "../poms/login";
-import { TASKS_TABLE_SELECTORS } from "../constants/selectors";
+// import { CommentPage } from "../poms/comment";
+import { TASKS_TABLE_SELECTORS, CREATE_COMMENT_SELECTORS, NAVBAR_SELECTORS } from "../constants/selectors";
+
 import { COMMON_TEXTS } from "../constants/texts";
 
 test.describe("Task Details Page", () => {
@@ -11,6 +13,7 @@ test.describe("Task Details Page", () => {
         loginPage: LoginPage,
         newUserPage: Page,
         newUserContext: BrowserContext;
+    // newCommentPage: CommentPage;
 
     test.beforeEach(async ({ page, taskPage, browser }) => {
 
@@ -28,11 +31,10 @@ test.describe("Task Details Page", () => {
         newUserContext = await browser.newContext({ storageState: { cookies: [], origins: [] }, });
         newUserPage = await newUserContext.newPage();
         loginPage = new LoginPage(newUserPage);
+        // newCommentPage = new CommentPage(newUserPage);
     });
 
     test.afterEach(async ({ page, taskPage }) => {
-        await newUserPage.close();
-        await newUserContext.close();
 
         const completedTaskInDashboard = page.getByTestId(TASKS_TABLE_SELECTORS.completedTasksTable).getByRole("row", { name: taskName });
 
@@ -58,12 +60,12 @@ test.describe("Task Details Page", () => {
         commentPage
     }) => {
 
-        await test.step("Step 1: Add a comment  and verify", () =>
+        await test.step("Step 1: Add a comment and verify", () =>
             commentPage.addCommentAndVerify({ commentDescription, taskName })
         );
 
-        await test.step("Step 2: Visit login page as standard user", () => newUserPage.goto("/"));
-        await test.step("Step 3: Login as standard user", () =>
+        await test.step("Step 2: Visit login page as assignee", () => newUserPage.goto("/"));
+        await test.step("Step 3: Login as assignee", () =>
             loginPage.loginAndVerifyUser({
                 email: process.env.STANDARD_EMAIL!,
                 password: process.env.STANDARD_PASSWORD!,
@@ -71,9 +73,15 @@ test.describe("Task Details Page", () => {
             })
         );
 
-        await test.step("Step 4: Assert comment to be visible for the standard user", () =>
-            commentPage.verifyComment({ commentDescription, taskName })
-        );
+        await test.step("Step 4: Assert comment to be visible for the assignee user", async () => {
+            // newCommentPage.verifyComment({ taskName, commentDescription });
+            await newUserPage.getByText(taskName).click();
+            await expect(newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toHaveText(commentDescription);
+            await newUserPage.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
+            await expect(newUserPage.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
+        });
+        await newUserPage.close();
+        await newUserContext.close();
     });
 
     test("should be able to add a new comment as an assignee of a task", async ({
@@ -81,20 +89,29 @@ test.describe("Task Details Page", () => {
         commentPage
     }) => {
 
-        await test.step("Step 1: Visit login page as standard user", () => newUserPage.goto("/"));
-        await test.step("Step 2: Login as standard user", () =>
+        await test.step("Step 1: Visit login page as assignee", () => newUserPage.goto("/"));
+        await test.step("Step 2: Login as assignee", () =>
             loginPage.loginAndVerifyUser({
                 email: process.env.STANDARD_EMAIL!,
                 password: process.env.STANDARD_PASSWORD!,
                 username: COMMON_TEXTS.standardUserName,
             })
         );
-        await test.step("Step 3: Add a comment and verify", () =>
-            commentPage.addCommentAndVerify({ commentDescription, taskName })
-        );
-        await test.step("Step 4: Visit dashboard as creator", () => page.goto("/"));
-        await test.step("Step 5: Assert comment to be visible for the creator", () =>
-            commentPage.verifyComment({ commentDescription, taskName })
-        );
+        await test.step("Step 3: Add a comment and verify", async () => {
+            // newCommentPage.addCommentAndVerify({ commentDescription, taskName })
+            await newUserPage.getByText(taskName).click();
+            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).click();
+            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).fill(commentDescription);
+            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsSubmitButton).click();
+            await expect(newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toBeVisible();
+            await newUserPage.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
+            await expect(newUserPage.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
+        });
+        await test.step("Step 4: Visit dashboard as creator", () => newUserPage.goto("/"));
+        await test.step("Step 5: Assert comment to be visible for the creator", async () => {
+            commentPage.verifyComment({ taskName, commentDescription });
+        });
+        await newUserPage.close();
+        await newUserContext.close();
     });
 });

@@ -16,7 +16,7 @@ export class CommentPage {
     addCommentAndVerify = async ({
         taskName,
         commentDescription
-    }: CreateNewCommentProps) => {
+    }: CreateNewCommentProps): Promise<void> => {
         await this.page.getByText(taskName).click();
         await this.page.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).click();
         await this.page.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).fill(commentDescription);
@@ -29,7 +29,7 @@ export class CommentPage {
     verifyComment = async ({
         taskName,
         commentDescription
-    }: CreateNewCommentProps) => {
+    }: CreateNewCommentProps): Promise<void> => {
         await this.page.getByText(taskName).click();
         await expect(this.page.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toHaveText(commentDescription);
         await this.page.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
