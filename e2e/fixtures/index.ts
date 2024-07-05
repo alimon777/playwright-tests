@@ -3,7 +3,7 @@
 import { test as base } from "@playwright/test";
 import LoginPage from "../poms/login";
 import { TaskPage } from "../poms/tasks";
-import { CommentPage } from "../poms/comment";
+import CommentPage from "../poms/comment";
 
 interface ExtendedFixtures {
     loginPage: LoginPage;

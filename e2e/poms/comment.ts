@@ -1,4 +1,3 @@
-
 import { Page, expect } from "@playwright/test";
 import {
     NAVBAR_SELECTORS,
@@ -10,7 +9,7 @@ interface CreateNewCommentProps {
     commentDescription: string;
 }
 
-export class CommentPage {
+export default class CommentPage {
     constructor(private page: Page) { }
 
     addCommentAndVerify = async ({
@@ -22,8 +21,7 @@ export class CommentPage {
         await this.page.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).fill(commentDescription);
         await this.page.getByTestId(CREATE_COMMENT_SELECTORS.commentsSubmitButton).click();
         await expect(this.page.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toBeVisible();
-        await this.page.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
-        await expect(this.page.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
+        await this.navigateToTodosPageAndVerifyTask(taskName);
     }
 
     verifyComment = async ({
@@ -32,7 +30,11 @@ export class CommentPage {
     }: CreateNewCommentProps): Promise<void> => {
         await this.page.getByText(taskName).click();
         await expect(this.page.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toHaveText(commentDescription);
+        await this.navigateToTodosPageAndVerifyTask(taskName);
+    }
+
+    private navigateToTodosPageAndVerifyTask = async (taskName: string): Promise<void> => {
         await this.page.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
-        await expect(this.page.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
+        await expect(this.page.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible();
     }
 }

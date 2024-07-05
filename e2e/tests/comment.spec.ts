@@ -2,8 +2,8 @@ import { test } from "../fixtures";
 import { BrowserContext, Page, expect } from "@playwright/test";
 import { faker } from "@faker-js/faker";
 import LoginPage from "../poms/login";
-// import { CommentPage } from "../poms/comment";
-import { TASKS_TABLE_SELECTORS, CREATE_COMMENT_SELECTORS, NAVBAR_SELECTORS } from "../constants/selectors";
+import CommentPage from "../poms/comment";
+import { TASKS_TABLE_SELECTORS } from "../constants/selectors";
 
 import { COMMON_TEXTS } from "../constants/texts";
 
@@ -12,8 +12,8 @@ test.describe("Task Details Page", () => {
         commentDescription: string,
         loginPage: LoginPage,
         newUserPage: Page,
-        newUserContext: BrowserContext;
-    // newCommentPage: CommentPage;
+        newUserContext: BrowserContext,
+        newCommentPage: CommentPage;
 
     test.beforeEach(async ({ page, taskPage, browser }) => {
 
@@ -31,7 +31,7 @@ test.describe("Task Details Page", () => {
         newUserContext = await browser.newContext({ storageState: { cookies: [], origins: [] }, });
         newUserPage = await newUserContext.newPage();
         loginPage = new LoginPage(newUserPage);
-        // newCommentPage = new CommentPage(newUserPage);
+        newCommentPage = new CommentPage(newUserPage);
     });
 
     test.afterEach(async ({ page, taskPage }) => {
@@ -54,6 +54,8 @@ test.describe("Task Details Page", () => {
             await expect(completedTaskInDashboard).toBeHidden();
             await expect(page.getByTestId(TASKS_TABLE_SELECTORS.pendingTasksTable).getByRole("row", { name: taskName })).toBeHidden();
         });
+        await newUserPage.close();
+        await newUserContext.close();
     });
 
     test("should be able to add a new comment as a creator of a task", async ({
@@ -73,15 +75,9 @@ test.describe("Task Details Page", () => {
             })
         );
 
-        await test.step("Step 4: Assert comment to be visible for the assignee user", async () => {
-            // newCommentPage.verifyComment({ taskName, commentDescription });
-            await newUserPage.getByText(taskName).click();
-            await expect(newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toHaveText(commentDescription);
-            await newUserPage.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
-            await expect(newUserPage.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
-        });
-        await newUserPage.close();
-        await newUserContext.close();
+        await test.step("Step 4: Assert comment to be visible for the assignee user", () =>
+            newCommentPage.verifyComment({ taskName, commentDescription })
+        );
     });
 
     test("should be able to add a new comment as an assignee of a task", async ({
@@ -96,20 +92,14 @@ test.describe("Task Details Page", () => {
                 username: COMMON_TEXTS.standardUserName,
             })
         );
-        await test.step("Step 3: Add a comment and verify", async () => {
-            // newCommentPage.addCommentAndVerify({ taskName, commentDescription })
-            await newUserPage.getByText(taskName).click();
-            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).click();
-            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsTextField).fill(commentDescription);
-            await newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.commentsSubmitButton).click();
-            await expect(newUserPage.getByTestId(CREATE_COMMENT_SELECTORS.taskCommentContent)).toBeVisible();
-            await newUserPage.getByTestId(NAVBAR_SELECTORS.todosPageLink).click();
-            await expect(newUserPage.getByRole("row", { name: taskName }).getByRole('cell', { name: '1' })).toBeVisible()
-        });
-        await test.step("Step 4: Assert comment to be visible for the creator", async () => {
-            commentPage.verifyComment({ taskName, commentDescription });
-        });
-        await newUserPage.close();
-        await newUserContext.close();
+
+        await test.step("Step 3: Add a comment and verify", () =>
+            newCommentPage.addCommentAndVerify({ taskName, commentDescription })
+        );
+
+        await test.step("Step 4: Assert comment to be visible for the creator", async () =>
+            commentPage.verifyComment({ taskName, commentDescription })
+        );
+
     });
 });
